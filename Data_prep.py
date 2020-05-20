@@ -4,6 +4,7 @@ import random
 import scipy.stats as stats
 import scipy.signal as sig
 import matplotlib.pyplot as plt
+import sys
 
 
 def split_test_train(data, id_column, threshold):
@@ -85,38 +86,65 @@ def segment(data, period, step, label_column, columns, id_column):
     return reshaped_segments, labels
 
 
-def segment_own(data, period, step, label_column, columns, id_column):
-    # user_ids = data[id_column].unique()
-    N_FEATURES = columns.shape[0]
-    segments = []
-    labels = []
-    # grouped = data.groupby(data[id_column])
-    # del data
-    # for id_i in user_ids:
-    #     user_data = grouped.get_group(id_i)
-    #     print(id_i)
-        # user_data = user_data.to_numpy()
-    for i in range(0, len(data) - period, step):
-        # print(i)
-        features = data[columns].values[0: period]
-        # print(i)
-        # Retrieve the most often used label in this segment
-        label = stats.mode(data[label_column][0: period])[0][0]
-        data = data.drop(data.index[0: period])
-        # print(data)
-        segments.append(features)
-        print(i)
-        features = None
-        labels.append(label)
-        # del user_data
-    data = None
+# def segment_own(data, period, step, label_column, columns, id_column):
+#     user_ids = data[id_column].unique()
+#     N_FEATURES = columns.shape[0]
+#     segments = []
+#     labels = []
+#     grouped = data.groupby(data[id_column])
+#     # del data
+#     # for id_i in user_ids:
+#     #     user_data = grouped.get_group(id_i)
+#     #     print(id_i)
+#         # user_data = user_data.to_numpy()
+#     for i in range(0, len(data) - period, step):
+#         # print(i)
+#         features = data[columns].values[0: period]
+#         # print(i)
+#         # Retrieve the most often used label in this segment
+#         label = stats.mode(data[label_column][0: period])[0][0]
+#         data = data.drop(data.index[0: period])
+#         # print(data)
+#         segments.append(features)
+#         print(i)
+#         features = None
+#         labels.append(label)
+#         # del user_data
+#     data = None
+#
+#     # Bring the segments into a better shape
+#     reshaped_segments = np.asarray(segments, dtype= np.float32).reshape(-1, period, N_FEATURES)
+#     labels = np.asarray(labels)
+#
+#     return reshaped_segments, labels
 
-    # Bring the segments into a better shape
-    reshaped_segments = np.asarray(segments, dtype= np.float32).reshape(-1, period, N_FEATURES)
-    labels = np.asarray(labels)
+def change_segments_own(data):
+    out_data = np.empty((0, 78))#84
+    print(data.shape)
+    for j in range(0, data.shape[0]):
+        features = []
+        features = np.array(features)
+        for i in range(0, data.shape[2]):
+            hist, bins = np.histogram(data[j, :, i], bins=10)
+            #             hist = hist.T
+            features = np.concatenate((features, hist))
+            avg = np.average(data[j, :, i])
+            features = np.concatenate((features, [avg]))
+            # peaks, properties = sig.find_peaks(data[j, :, i])
+            # peaks = np.array(peaks)
+            # differences = np.diff(peaks)
+            # difference = np.average(differences)
+            # features = np.concatenate((features, [difference]))
+            standard_dev = np.std(data[j, :, i])
+            features = np.concatenate((features, [standard_dev]))
+            mad = np.average(np.absolute(data[j, :, i] - np.average(data[j, :, i])))
+            features = np.concatenate((features, [mad]))
 
-    return reshaped_segments, labels
+        features = np.array(features)
+        features = np.reshape(features, (1, features.shape[0]))
+        out_data = np.vstack((out_data, features))
 
+    return out_data
 
 def change_segments(data):
     out_data = np.empty((0,84))

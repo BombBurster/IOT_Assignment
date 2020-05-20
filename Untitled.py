@@ -9,6 +9,8 @@ from sklearn.feature_selection import f_regression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
+np.set_printoptions(threshold=sys.maxsize)
+
 TIME_PERIODS = 200
 STEP_DISTANCE = 200
 BEST_PARAM_GRID_SVM = [
@@ -68,10 +70,10 @@ def select_dataset():
     elif exec_mode == '2':
         flag = 1
         dataset = pd.read_csv('watch.csv')
-        print(dataset)
+        # print(dataset)
     elif exec_mode == '3':
         flag = 1
-        flag_own = 0
+        flag_own = 1
         dataset = pd.read_csv('our_own.csv')
         # print(dataset)
         # dataset = dataset1.loc[np.random.choice(dataset1.index, 1500000, replace=False)]
@@ -107,16 +109,19 @@ def select_grid_or_norm(dataset, flag_own):
             x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity', test.columns.difference(['activity','user-id','timestamp']), 'user-id')
             x_test_n = change_segments(x_test)
             x_train_n = change_segments(x_train)
+            print(y_train)
         else:
-            x, y = segment_own(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity', dataset.columns.difference(['activity','user-id','timestamp']), 'user-id')
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity', dataset.columns.difference(['activity','user-id','timestamp']), 'activity')
             del dataset
-            print(x)
-            x_n = change_segments(x)
+            # print(x)
+            x_n = change_segments_own(x)
             del x
-            print(x_n)
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
             x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
             del x_n
-            print(x_train_n)
+            # print(x_train_n)
         x_train_n_1 = pd.DataFrame(x_train_n)
         x_test_n_1 = pd.DataFrame(x_test_n)
         remove_columns = p_value(x_train_n_1, y_train, 0.05)
@@ -169,22 +174,34 @@ def select_grid_or_norm(dataset, flag_own):
              'max_depth': [None],
              'class_weight': ['balanced'],
              'oob_score': [True, False],
-             'max_features': ['auto'],#, 'sqrt'],
-             'min_samples_leaf': [1],#, 2, 4],
-             'min_samples_split': [2],#, 5, 10],
+             'max_features': ['auto'],
+             'min_samples_leaf': [1, 2, 4],
+             'min_samples_split': [2, 5, 10],
              'n_estimators': [1500, 10000, 20000]}  # 500, 1000,
         ]
         column_names = dataset.keys()
         if flag_own == 0:
             test, train = split_test_train(dataset, 'user-id', 0.8)
-            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity', train.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity', test.columns.difference(['activity','user-id','timestamp']), 'user-id')
+            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                       train.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                     test.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
             x_test_n = change_segments(x_test)
             x_train_n = change_segments(x_train)
+            print(y_train)
         else:
-            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity', dataset.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_n = change_segments(x)
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                           dataset.columns.difference(['activity', 'user-id', 'timestamp']), 'activity')
+            del dataset
+            # print(x)
+            x_n = change_segments_own(x)
+            del x
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
             x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
+            del x_n
+            # print(x_train_n)
         x_train_n_1 = pd.DataFrame(x_train_n)
         x_test_n_1 = pd.DataFrame(x_test_n)
         remove_columns = p_value(x_train_n_1, y_train, 0.05)
@@ -237,14 +254,26 @@ def select_grid_or_norm(dataset, flag_own):
         column_names = dataset.keys()
         if flag_own == 0:
             test, train = split_test_train(dataset, 'user-id', 0.8)
-            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity', train.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity', test.columns.difference(['activity','user-id','timestamp']), 'user-id')
+            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                       train.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                     test.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
             x_test_n = change_segments(x_test)
             x_train_n = change_segments(x_train)
+            print(y_train)
         else:
-            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity', dataset.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_n = change_segments(x)
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                           dataset.columns.difference(['activity', 'user-id', 'timestamp']), 'activity')
+            del dataset
+            # print(x)
+            x_n = change_segments_own(x)
+            del x
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
             x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
+            del x_n
+            # print(x_train_n)
         x_train_n_1 = pd.DataFrame(x_train_n)
         x_test_n_1 = pd.DataFrame(x_test_n)
         remove_columns = p_value(x_train_n_1, y_train, 0.05)
@@ -281,14 +310,26 @@ def select_grid_or_norm(dataset, flag_own):
         print(BEST_PARAM_GRID_RF)
         if flag_own == 0:
             test, train = split_test_train(dataset, 'user-id', 0.8)
-            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity', train.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity', test.columns.difference(['activity','user-id','timestamp']), 'user-id')
+            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                       train.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                     test.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
             x_test_n = change_segments(x_test)
             x_train_n = change_segments(x_train)
+            print(y_train)
         else:
-            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity', dataset.columns.difference(['activity','user-id','timestamp']), 'user-id')
-            x_n = change_segments(x)
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                           dataset.columns.difference(['activity', 'user-id', 'timestamp']), 'activity')
+            del dataset
+            # print(x)
+            x_n = change_segments_own(x)
+            del x
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
             x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
+            del x_n
+            # print(x_train_n)
         array_correlation = ['pearson', 'p-value']
         results = []
         for feature_select in array_correlation:

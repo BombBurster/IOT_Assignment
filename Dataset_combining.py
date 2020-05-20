@@ -24,10 +24,10 @@ def loadfromFilePath(path, column_names, own):
     dataset = pd.DataFrame(columns = column_names)
     for file in files:
         if own == 0:
-            df = pd.read_csv(file, header=None, names=column_names, skiprows=[30], skipfooter=30, engine='python')
+            df = pd.read_csv(file, header=None, names=column_names) # , skiprows=[60], skipfooter=60, engine='python')
         else:
-#             print(file)
-            df = pd.read_csv(file, header=0, names=column_names, skiprows=[30], skipfooter=30, engine='python')
+            print(file)
+            df = pd.read_csv(file, header=0, names=column_names, skiprows=[60], skipfooter=60, engine='python')
 #             print(df)
         dataset = dataset.append(df)
     if own == 0:
@@ -67,20 +67,22 @@ dataset_merge_3 = pd.concat([dataset_merge_3, dataset_merge_4], axis=0)
 
 
 # showing that merging the watch data and the phone data is not compatible - therefore train seperately
-merge_1 = pd.merge(acc_mobile, acc_watch, on=['user-id', 'activity', 'timestamp'])
+# merge_1 = pd.merge(acc_mobile, acc_watch, on=['user-id', 'activity', 'timestamp'])
 # print(merge_1)
 
 
 dataset_merge.activity = pd.Categorical(dataset_merge.activity)
-dataset_merge_2.activity = pd.Categorical(dataset_merge_2.activity)
-dataset_merge_3.activity = pd.Categorical(dataset_merge_3.activity)
-dataset_merge_3['user-id'] = pd.Categorical(dataset_merge_3['user-id'])
 dataset_merge.activity = dataset_merge.activity.cat.codes
+dataset_merge_2.activity = pd.Categorical(dataset_merge_2.activity)
+dataset_merge_2.activity = dataset_merge_2.activity.cat.codes
+dataset_merge_3.activity = pd.Categorical(dataset_merge_3.activity)
 dataset_merge_3.activity = dataset_merge_3.activity.cat.codes
+dataset_merge_3['user-id'] = pd.Categorical(dataset_merge_3['user-id'])
 dataset_merge_3['user-id'] = dataset_merge_3['user-id'].cat.codes
 # print(dataset_merge_3)
 
 
+# dataset_merge_2 = dataset_merge_2.iloc[::2, :]
 dataset_merge_3 = dataset_merge_3.iloc[::20, :]
 print(dataset_merge_3)
 
