@@ -24,10 +24,10 @@ def loadfromFilePath(path, column_names, own):
     dataset = pd.DataFrame(columns = column_names)
     for file in files:
         if own == 0:
-            df = pd.read_csv(file, header=None, names=column_names)
+            df = pd.read_csv(file, header=None, names=column_names, skiprows=[30], skipfooter=30, engine='python')
         else:
 #             print(file)
-            df = pd.read_csv(file, header=0, names=column_names)
+            df = pd.read_csv(file, header=0, names=column_names, skiprows=[30], skipfooter=30, engine='python')
 #             print(df)
         dataset = dataset.append(df)
     if own == 0:
