@@ -14,7 +14,7 @@ np.set_printoptions(threshold=sys.maxsize)
 TIME_PERIODS = 200
 STEP_DISTANCE = 200
 BEST_PARAM_GRID_SVM = [
-            {'C': [1],
+            {'C': [5],
              'tol': [0.001],
              'max_iter': [-1],
              'kernel': ['rbf'],
@@ -175,8 +175,8 @@ def select_grid_or_norm(dataset, flag_own):
              'class_weight': ['balanced'],
              'oob_score': [True, False],
              'max_features': ['auto'],
-             'min_samples_leaf': [1, 2, 4],
-             'min_samples_split': [2, 5, 10],
+             'min_samples_leaf': [1], # , 2, 4],
+             'min_samples_split': [2], #, 5, 10],
              'n_estimators': [1500, 10000, 20000]}  # 500, 1000,
         ]
         column_names = dataset.keys()
@@ -211,7 +211,7 @@ def select_grid_or_norm(dataset, flag_own):
         x_train_n = transformer.transform(x_train_n_1)
         x_test_n = transformer.transform(x_test_n_1)
         clf = RandomForestClassifier()
-        rf_model = GridSearchCV(clf, param_grid=param_grid, cv=5, n_jobs=-1, error_score=np.nan, verbose=1) 
+        rf_model = GridSearchCV(clf, param_grid=param_grid, cv=5, n_jobs=-1, error_score=np.nan, verbose=1)
         rf_model = rf_model.fit(x_train_n, y_train)
         # print the best hyper-parameters
         print('\nClass weight option:', rf_model.best_estimator_.get_params()['class_weight'])
@@ -366,6 +366,128 @@ def select_grid_or_norm(dataset, flag_own):
             rec_rf = metrics.recall_score(y_test, y_pred, average='weighted')
             results.append([acc_svm, f1_svm, prec_svm, rec_svm, acc_rf, f1_rf, prec_rf, rec_rf, x_train_n_1.shape[1]])
         print(results)
+    elif exec_mode == 5:
+        flaq = 1
+        param_grid = BEST_PARAM_GRID_SVM
+        column_names = dataset.keys()
+        if flag_own == 0:
+            test, train = split_test_train(dataset, 'user-id', 0.8)
+            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                       train.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                     test.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test_n = change_segments(x_test)
+            x_train_n = change_segments(x_train)
+            print(y_train)
+        else:
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                           dataset.columns.difference(['activity', 'user-id', 'timestamp']), 'activity')
+            del dataset
+            # print(x)
+            x_n = change_segments_own(x)
+            del x
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
+            x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
+            del x_n
+            # print(x_train_n)
+        x_train_n_1 = pd.DataFrame(x_train_n)
+        x_test_n_1 = pd.DataFrame(x_test_n)
+        remove_columns = p_value(x_train_n_1, y_train, 0.05)
+        x_train_n_1 = x_train_n_1.drop(columns=remove_columns)
+        x_test_n_1 = x_test_n_1.drop(columns=remove_columns)
+        transformer = StandardScaler().fit(x_train_n_1)
+        x_train_n = transformer.transform(x_train_n_1)
+        x_test_n = transformer.transform(x_test_n_1)
+        clf = SVC()
+        svm_model = GridSearchCV(clf, param_grid=param_grid, cv=5, n_jobs=-1, error_score=np.nan, verbose=1)
+        svm_model = svm_model.fit(x_train_n, y_train)
+        # print the best hyper-parameters
+        print('\nClass weight option:', svm_model.best_estimator_.get_params()['class_weight'])
+        print('Best kernel:', svm_model.best_estimator_.get_params()['kernel'])
+        print('Best polynomial degree:', svm_model.best_estimator_.get_params()['degree'])
+        print('Best gamma:', svm_model.best_estimator_.get_params()['gamma'])
+        print('Best C:', svm_model.best_estimator_.get_params()['C'])
+        print('Best tolerance:', svm_model.best_estimator_.get_params()['tol'])
+        print('Best max number of iterations', svm_model.best_estimator_.get_params()['max_iter'])
+        print('Best decision function shape option', svm_model.best_estimator_.get_params()['decision_function_shape'],
+              '\n')
+
+        # print the accuracy scores
+        y_pred = svm_model.predict(x_test_n)
+        result = metrics.accuracy_score(y_test, y_pred)
+        result_2 = metrics.balanced_accuracy_score(y_test, y_pred)
+        f1_svm = metrics.f1_score(y_test, y_pred, average='weighted')
+        prec_svm = metrics.precision_score(y_test, y_pred, average='weighted')
+        rec_svm = metrics.recall_score(y_test, y_pred, average='weighted')
+        conf_matrix = metrics.confusion_matrix(y_test, y_pred)
+        print('The accuracy score is: ', result)
+        print('The balanced accuracy score is: ', result_2)
+        print('The f1-score is: ', f1_svm)
+        print('The precision score is: ', prec_svm)
+        print('The recall score is: ', rec_svm)
+        print('Confusion Matrix: ', conf_matrix)
+        param_grid = BEST_PARAM_GRID_RF
+        column_names = dataset.keys()
+        if flag_own == 0:
+            test, train = split_test_train(dataset, 'user-id', 0.8)
+            x_train, y_train = segment(train, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                       train.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test, y_test = segment(test, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                                     test.columns.difference(['activity', 'user-id', 'timestamp']), 'user-id')
+            x_test_n = change_segments(x_test)
+            x_train_n = change_segments(x_train)
+            print(y_train)
+        else:
+            x, y = segment(dataset, TIME_PERIODS, STEP_DISTANCE, 'activity',
+                           dataset.columns.difference(['activity', 'user-id', 'timestamp']), 'activity')
+            del dataset
+            # print(x)
+            x_n = change_segments_own(x)
+            del x
+            # print(x_n[np.isnan(x_n).any(axis=1)])
+            # y = y[~np.isnan(x_n).any(axis=1)]
+            # x_n = x_n[~np.isnan(x_n).any(axis=1)]
+            x_train_n, x_test_n, y_train, y_test = train_test_split(x_n, y, test_size=0.2)
+            del x_n
+            # print(x_train_n)
+        x_train_n_1 = pd.DataFrame(x_train_n)
+        x_test_n_1 = pd.DataFrame(x_test_n)
+        remove_columns = p_value(x_train_n_1, y_train, 0.05)
+        x_train_n_1 = x_train_n_1.drop(columns=remove_columns)
+        x_test_n_1 = x_test_n_1.drop(columns=remove_columns)
+        transformer = StandardScaler().fit(x_train_n_1)
+        x_train_n = transformer.transform(x_train_n_1)
+        x_test_n = transformer.transform(x_test_n_1)
+        clf = RandomForestClassifier()
+        rf_model = GridSearchCV(clf, param_grid=param_grid, cv=5, n_jobs=3, error_score=np.nan, verbose=1)
+        rf_model = rf_model.fit(x_train_n, y_train)
+        # print the best hyper-parameters
+        print('\nClass weight option:', rf_model.best_estimator_.get_params()['class_weight'])
+        print('Bootstrap option:', rf_model.best_estimator_.get_params()['bootstrap'])
+        print('Best maximum tree depth:', rf_model.best_estimator_.get_params()['max_depth'])
+        print('Out-of-bag score option:', rf_model.best_estimator_.get_params()['oob_score'])
+        print('Best maximum features:', rf_model.best_estimator_.get_params()['max_features'])
+        print('Best minimum samples for leaf node:', rf_model.best_estimator_.get_params()['min_samples_leaf'])
+        print('Best minimum samples for splitting node', rf_model.best_estimator_.get_params()['min_samples_split'])
+        print('Best number of trees', rf_model.best_estimator_.get_params()['n_estimators'],
+              '\n')
+
+        # print the accuracy scores
+        y_pred = rf_model.predict(x_test_n)
+        result = metrics.accuracy_score(y_test, y_pred)
+        result_2 = metrics.balanced_accuracy_score(y_test, y_pred)
+        f1_rf = metrics.f1_score(y_test, y_pred, average='weighted')
+        prec_rf = metrics.precision_score(y_test, y_pred, average='weighted')
+        rec_rf = metrics.recall_score(y_test, y_pred, average='weighted')
+        conf_matrix = metrics.confusion_matrix(y_test, y_pred)
+        print('The accuracy score is: ', result)
+        print('The balanced accuracy score is: ', result_2)
+        print('The f1-score is: ', f1_rf)
+        print('The precision score is: ', prec_rf)
+        print('The recall score is: ', rec_rf)
+        print('Confusion Matrix: ', conf_matrix)
     else:
         flag = 0
     return flag
