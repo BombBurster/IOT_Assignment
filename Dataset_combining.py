@@ -70,11 +70,11 @@ dataset_merge_3 = pd.concat([dataset_merge_3, dataset_merge_4], axis=0)
 # merge_1 = pd.merge(acc_mobile, acc_watch, on=['user-id', 'activity', 'timestamp'])
 # print(merge_1)
 
-orig_cat = dataset_merge.activity.categories
+# orig_cat = dataset_merge.activity.categories
 dataset_merge.activity = pd.Categorical(dataset_merge.activity)
 dataset_merge.activity = dataset_merge.activity.cat.codes
-new_cat = dataset_merge.activity.categories
-print(orig_cat, new_cat)
+# new_cat = dataset_merge.activity.categories
+# print(orig_cat, new_cat)
 dataset_merge_2.activity = pd.Categorical(dataset_merge_2.activity)
 dataset_merge_2.activity = dataset_merge_2.activity.cat.codes
 dataset_merge_3.activity = pd.Categorical(dataset_merge_3.activity)

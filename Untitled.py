@@ -87,7 +87,7 @@ def select_dataset():
 def select_grid_or_norm(dataset, flag_own):
     global BEST_PARAM_GRID_SVM
     global BEST_PARAM_GRID_RF
-    print('Dataset Options:\n1. Grid Search SVM\n2. Grid Search Random Forest\n3. Compare different scalers\n4. Compare different feature selection')
+    print('Dataset Options:\n1. Grid Search SVM\n2. Grid Search Random Forest\n3. Compare different scalers\n4. Compare different feature selection\n5. Run confusion Matrix')
     flag = 1
     exec_mode = input('Select: ')
     if exec_mode == '1':
