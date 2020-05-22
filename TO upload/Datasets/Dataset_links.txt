@@ -1,0 +1,5 @@
+WISDM dataset: https://archive.ics.uci.edu/ml/machine-learning-databases/00507/
+
+Our Own Dataset:
+https://drive.google.com/drive/folders/10W3L9L_GT7CsMX36xNlFODOoIuLQVHSr?usp=sharing
+
